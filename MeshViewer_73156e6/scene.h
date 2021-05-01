@@ -23,6 +23,7 @@
 #include <utility>
 #include <OpenMesh/Core/IO/MeshIO.hh>
 #include <OpenMesh/Core/Mesh/TriMesh_ArrayKernelT.hh>
+#include "taulaMC.hpp"
 // define traits
 struct MyTraits : public OpenMesh::DefaultTraits
 {

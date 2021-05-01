@@ -524,6 +524,7 @@ build/moc_glwin.cpp: glwin.h \
 		../glm/glm/ext/matrix_transform.inl \
 		../glm/glm/gtc/matrix_transform.inl \
 		scene.h \
+		taulaMC.hpp \
 		utils.h \
 		build/moc_predefs.h \
 		/usr/lib/qt5/bin/moc
@@ -711,11 +712,13 @@ build/glwin.o: glwin.cxx glwin.h \
 		../glm/glm/ext/matrix_transform.inl \
 		../glm/glm/gtc/matrix_transform.inl \
 		scene.h \
+		taulaMC.hpp \
 		utils.h \
 		checkgl.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o build/glwin.o glwin.cxx
 
-build/scene.o: scene.cxx scene.h
+build/scene.o: scene.cxx scene.h \
+		taulaMC.hpp
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o build/scene.o scene.cxx
 
 build/utils.o: utils.cxx utils.h \
@@ -1033,6 +1036,7 @@ build/viewer.o: viewer.cxx glwin.h \
 		../glm/glm/ext/matrix_transform.inl \
 		../glm/glm/gtc/matrix_transform.inl \
 		scene.h \
+		taulaMC.hpp \
 		utils.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o build/viewer.o viewer.cxx
 
