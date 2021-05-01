@@ -26,6 +26,7 @@
 #include <QFileDialog>
 #include <QTimer>
 #include <QMenu>
+#include <QSlider>
 #include <string>
 #include <vector>
 #define GLM_FORCE_RADIANS
@@ -94,5 +95,7 @@ class glwin : public QOpenGLWidget, public QOpenGLFunctions_3_3_Core
   int xprev, yprev;
   glm::vec3 eixPrev;
   QMenu *popup_menu;
+
+  QSlider *slider;
 };
 #endif // __MeshViewer_glwin_h_

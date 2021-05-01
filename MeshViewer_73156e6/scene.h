@@ -46,10 +46,10 @@ class Scene {
   Scene();
   ~Scene();
   bool load(const char* name);
-  bool loadVolume(const char* name);
+  int loadVolume(const char* name);
   void addCube();
   void addCubeVertexcolors();
-  void addOctagon();
+  void addOctahedron(OpenMesh::Vec3d position, float scale);
   typedef enum {NONE=0, VERTEX_COLORS, FACE_COLORS} ColorInfo;
   const std::vector<std::pair<MyMesh,ColorInfo> >& meshes() {return _meshes;}
 

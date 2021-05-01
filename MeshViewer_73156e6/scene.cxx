@@ -83,16 +83,21 @@ bool Scene::load(const char *name)
     return true;
 }
 
-bool Scene::loadVolume(const char *name)
+int Scene::loadVolume(const char *name)
 {
-    addCube();
+    int loaded_meshes = 0;
+
     std::ifstream volume_file(name);
+    int N = 0;
+
     if (volume_file.is_open())
     {
-        int N = 0;
         volume_file >> N;
 
         float data[N][N][N];
+
+        float max_value = -INFINITY;
+        float min_value = INFINITY;
 
         for (int i = 0; i < N; i++)
         {
@@ -101,14 +106,34 @@ bool Scene::loadVolume(const char *name)
                 for (int k = 0; k < N; k++)
                 {
                     volume_file >> data[i][j][k];
+
+                    max_value = std::max(max_value, data[i][j][k]);
+                    min_value = std::min(min_value, data[i][j][k]);
                 }
             }
         }
-        //volume_file >> data[int(i/(N*N))][int(i/N)][i%N];
-    }
-    volume_file.close();
 
-    return true;
+        volume_file.close();
+        float thr = min_value + (max_value - min_value) / 4.f;
+        float scale_factor = 1.f/(N*N);
+        for (int i = 0; i < N; i++)
+        {
+            for (int j = 0; j < N; j++)
+            {
+                for (int k = 0; k < N; k++)
+                {
+                    // std::cout << "Is " << data[i][j][k] << " smaller than " << thr << " ? " << std::endl;
+                    if (data[i][j][k] <= thr)
+                    {
+                        loaded_meshes++;
+                        addOctahedron(OpenMesh::Vec3d(i / float(N), j / float(N), k / float(N)), scale_factor);
+                    }
+                }
+            }
+        }
+    }
+
+    return loaded_meshes;
 }
 
 void Scene::addCube()
@@ -306,94 +331,70 @@ void Scene::addCubeVertexcolors()
     _meshes.push_back(std::pair<MyMesh, ColorInfo>(std::move(m), VERTEX_COLORS));
 }
 
-void Scene::addOctagon() 
+void Scene::addOctahedron(OpenMesh::Vec3d position, float scale)
 {
     MyMesh m;
     // Add vertices
-    MyMesh::VertexHandle vhandle[8];
-    vhandle[0] = m.add_vertex(MyMesh::Point(-1, -1, 1));
-    vhandle[1] = m.add_vertex(MyMesh::Point(1, -1, 1));
-    vhandle[2] = m.add_vertex(MyMesh::Point(1, 1, 1));
-    vhandle[3] = m.add_vertex(MyMesh::Point(-1, 1, 1));
-    vhandle[4] = m.add_vertex(MyMesh::Point(-1, -1, -1));
-    vhandle[5] = m.add_vertex(MyMesh::Point(1, -1, -1));
-    vhandle[6] = m.add_vertex(MyMesh::Point(1, 1, -1));
-    vhandle[7] = m.add_vertex(MyMesh::Point(-1, 1, -1));
+    MyMesh::VertexHandle vhandle[6];
+    vhandle[0] = m.add_vertex(MyMesh::Point(-1, 0, 0) * scale + position); // left
+    vhandle[1] = m.add_vertex(MyMesh::Point(0, 0, 1) * scale + position);  // front
+    vhandle[2] = m.add_vertex(MyMesh::Point(1, 0, 0) * scale + position);  // right
+    vhandle[3] = m.add_vertex(MyMesh::Point(0, 0, -1) * scale + position); // back
+    vhandle[4] = m.add_vertex(MyMesh::Point(0, -1, 0) * scale + position); // bottom
+    vhandle[5] = m.add_vertex(MyMesh::Point(0, 1, 0) * scale + position);  // top
+
     // Add (triangular) faces:
     std::vector<MyMesh::VertexHandle> face_vhandles;
     MyMesh::FaceHandle face;
-    face_vhandles.clear();               //front
-    face_vhandles.push_back(vhandle[0]); // (-1, -1,  1)
-    face_vhandles.push_back(vhandle[1]); // ( 1, -1,  1)
-    face_vhandles.push_back(vhandle[2]); // ( 1,  1,  1)
+    face_vhandles.clear();               // left bottom front
+    face_vhandles.push_back(vhandle[0]); // (-1, 0,  0)
+    face_vhandles.push_back(vhandle[4]); // ( 0, -1, 0)
+    face_vhandles.push_back(vhandle[1]); // ( 0, 0,  1)
     face = m.add_face(face_vhandles);
     m.set_color(face, MyMesh::Color(0., 0., 1.));
-    face_vhandles.clear();
-    face_vhandles.push_back(vhandle[2]); // ( 1,  1,  1)
-    face_vhandles.push_back(vhandle[3]); // (-1,  1,  1)
-    face_vhandles.push_back(vhandle[0]); // (-1, -1,  1)
+    face_vhandles.clear();               // front bottom right
+    face_vhandles.push_back(vhandle[1]); // ( 0, 0,  1)
+    face_vhandles.push_back(vhandle[4]); // ( 0, -1, 0)
+    face_vhandles.push_back(vhandle[2]); // ( 1, 0,  0)
     face = m.add_face(face_vhandles);
     m.set_color(face, MyMesh::Color(0., 0., 1.));
-    face_vhandles.clear();               // back
-    face_vhandles.push_back(vhandle[7]); // (-1,  1, -1)
-    face_vhandles.push_back(vhandle[6]); // ( 1,  1, -1)
-    face_vhandles.push_back(vhandle[5]); // ( 1, -1, -1)
+    face_vhandles.clear();               // right bottom back
+    face_vhandles.push_back(vhandle[2]); // ( 1, 0,  0)
+    face_vhandles.push_back(vhandle[4]); // ( 0, -1, 0)
+    face_vhandles.push_back(vhandle[3]); // ( 0, 0, -1)
     face = m.add_face(face_vhandles);
     m.set_color(face, MyMesh::Color(0., 0., 1.));
-    face_vhandles.clear();
-    face_vhandles.push_back(vhandle[7]); // (-1,  1, -1)
-    face_vhandles.push_back(vhandle[5]); // ( 1, -1, -1)
-    face_vhandles.push_back(vhandle[4]); // (-1, -1, -1)
+    face_vhandles.clear();               // back bottom left
+    face_vhandles.push_back(vhandle[3]); // ( 0, 0, -1)
+    face_vhandles.push_back(vhandle[4]); // ( 0, -1, 0)
+    face_vhandles.push_back(vhandle[0]); // ( -1, 0, 0)
     face = m.add_face(face_vhandles);
     m.set_color(face, MyMesh::Color(0., 0., 1.));
-    face_vhandles.clear();               // top
-    face_vhandles.push_back(vhandle[3]); // (-1,  1,  1)
-    face_vhandles.push_back(vhandle[2]); // ( 1,  1,  1)
-    face_vhandles.push_back(vhandle[6]); // ( 1,  1, -1)
+    face_vhandles.clear();               // left front top
+    face_vhandles.push_back(vhandle[0]); // (-1, 0,  0)
+    face_vhandles.push_back(vhandle[1]); // ( 0, 0,  1)
+    face_vhandles.push_back(vhandle[5]); // ( 0, 1,  0)
     face = m.add_face(face_vhandles);
-    m.set_color(face, MyMesh::Color(0., 1., 0.));
-    face_vhandles.clear();
-    face_vhandles.push_back(vhandle[3]); // (-1,  1,  1)
-    face_vhandles.push_back(vhandle[6]); // ( 1,  1, -1)
-    face_vhandles.push_back(vhandle[7]); // (-1,  1, -1)
+    m.set_color(face, MyMesh::Color(0., 0., 1.));
+    face_vhandles.clear();               // front right top
+    face_vhandles.push_back(vhandle[1]); // ( 0, 0,  1)
+    face_vhandles.push_back(vhandle[2]); // ( 1, 0,  0)
+    face_vhandles.push_back(vhandle[5]); // ( 0, 1,  0)
     face = m.add_face(face_vhandles);
-    m.set_color(face, MyMesh::Color(0., 1., 0.));
-    face_vhandles.clear();               // bottom
-    face_vhandles.push_back(vhandle[1]); // ( 1, -1,  1)
-    face_vhandles.push_back(vhandle[0]); // (-1, -1,  1)
-    face_vhandles.push_back(vhandle[4]); // (-1, -1, -1)
+    m.set_color(face, MyMesh::Color(0., 0., 1.));
+    face_vhandles.clear();               // right back top
+    face_vhandles.push_back(vhandle[2]); // ( 1, 0,  0)
+    face_vhandles.push_back(vhandle[3]); // ( 0, 0, -1)
+    face_vhandles.push_back(vhandle[5]); // ( 0, 1,  0)
     face = m.add_face(face_vhandles);
-    m.set_color(face, MyMesh::Color(0., 1., 0.));
-    face_vhandles.clear();
-    face_vhandles.push_back(vhandle[1]); // ( 1, -1,  1)
-    face_vhandles.push_back(vhandle[4]); // (-1, -1, -1)
-    face_vhandles.push_back(vhandle[5]); // ( 1, -1, -1)
+    m.set_color(face, MyMesh::Color(0., 0., 1.));
+    face_vhandles.clear();               // back left top
+    face_vhandles.push_back(vhandle[3]); // ( 0, 0, -1)
+    face_vhandles.push_back(vhandle[0]); // ( -1, 0, 0)
+    face_vhandles.push_back(vhandle[5]); // ( 0,  1, 0)
     face = m.add_face(face_vhandles);
-    m.set_color(face, MyMesh::Color(0., 1., 0.));
-    face_vhandles.clear();               // left
-    face_vhandles.push_back(vhandle[0]); // (-1, -1,  1)
-    face_vhandles.push_back(vhandle[3]); // (-1,  1,  1)
-    face_vhandles.push_back(vhandle[7]); // (-1,  1, -1)
-    face = m.add_face(face_vhandles);
-    m.set_color(face, MyMesh::Color(1., 0., 0.));
-    face_vhandles.clear();
-    face_vhandles.push_back(vhandle[0]); // (-1, -1,  1)
-    face_vhandles.push_back(vhandle[7]); // (-1,  1, -1)
-    face_vhandles.push_back(vhandle[4]); // (-1, -1, -1)
-    face = m.add_face(face_vhandles);
-    m.set_color(face, MyMesh::Color(1., 0., 0.));
-    face_vhandles.clear();               // right
-    face_vhandles.push_back(vhandle[2]); // ( 1,  1,  1)
-    face_vhandles.push_back(vhandle[1]); // ( 1, -1,  1)
-    face_vhandles.push_back(vhandle[5]); // ( 1, -1, -1)
-    face = m.add_face(face_vhandles);
-    m.set_color(face, MyMesh::Color(1., 0., 0.));
-    face_vhandles.clear();
-    face_vhandles.push_back(vhandle[2]); // ( 1,  1,  1)
-    face_vhandles.push_back(vhandle[5]); // ( 1, -1, -1)
-    face_vhandles.push_back(vhandle[6]); // ( 1,  1, -1)
-    face = m.add_face(face_vhandles);
-    m.set_color(face, MyMesh::Color(1., 0., 0.));
+    m.set_color(face, MyMesh::Color(0., 0., 1.));
+
     m.update_normals();
-    _meshes.push_back(std::pair<MyMesh, ColorInfo>(std::move(m), FACE_COLORS));    
+    _meshes.push_back(std::pair<MyMesh, ColorInfo>(std::move(m), FACE_COLORS));
 }
