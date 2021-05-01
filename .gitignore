@@ -55,4 +55,10 @@ compile_commands.json
 
 # VSCode generated files
 .vscode/
+
+# build files
 **/build/
+
+# Binaries
+**/MeshViewer
+
