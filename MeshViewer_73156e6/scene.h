@@ -23,7 +23,9 @@
 #include <utility>
 #include <OpenMesh/Core/IO/MeshIO.hh>
 #include <OpenMesh/Core/Mesh/TriMesh_ArrayKernelT.hh>
-#include "taulaMC.hpp"
+
+#define OUT
+
 // define traits
 struct MyTraits : public OpenMesh::DefaultTraits
 {
@@ -48,6 +50,7 @@ class Scene {
   ~Scene();
   bool load(const char* name);
   int loadVolume(const char* name);
+  bool computeVolumeIsosurface(const char* name);
   void addCube();
   void addCubeVertexcolors();
   void addOctahedron(OpenMesh::Vec3d position, float scale);

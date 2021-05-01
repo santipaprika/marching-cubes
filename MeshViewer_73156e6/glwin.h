@@ -44,10 +44,12 @@ class glwin : public QOpenGLWidget, public QOpenGLFunctions_3_3_Core
   glwin(const std::string& args);
   void loadMesh(const char *name);
   void loadVolume(const char *name);
+  void computeVolumeIsosurface(const char *name);
 
  private slots:
   void setValue(int val);
   void loadVolume();
+  void computeVolumeIsosurface();
   void loadMesh();
   void addCube();
   void addCubeVC();

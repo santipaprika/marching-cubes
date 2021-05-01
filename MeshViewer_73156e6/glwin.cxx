@@ -66,7 +66,7 @@ void glwin::setup_menu()
     connect(action, SIGNAL(triggered()), this, SLOT(addCubeVC()));
     popup_menu->addAction(action);
 
-    resize(600,600);
+    resize(600, 600);
     slider = new QSlider(Qt::Horizontal, this);
 
     slider->setFocusPolicy(Qt::StrongFocus);
@@ -74,12 +74,12 @@ void glwin::setup_menu()
     slider->setTickInterval(10);
     slider->setSingleStep(1);
     slider->setTracking(false);
-    slider->move(50,550);
+    slider->move(50, 550);
     slider->setMinimum(1);
     slider->setMaximum(40);
     slider->setMinimumSize(500, 20);
     // slider->setMinimumSize(600,600);
-    connect( slider, SIGNAL(valueChanged(int)), this, SLOT(setValue(int)) );
+    connect(slider, SIGNAL(valueChanged(int)), this, SLOT(setValue(int)));
 }
 
 //
@@ -119,13 +119,29 @@ void glwin::loadVolume(const char *name)
     }
 }
 
+void glwin::computeVolumeIsosurface()
+{
+    QString file = QFileDialog::getOpenFileName(NULL, "Select a volume to add:", "", "Meshes (*.txt);;All Files (*)");
+    computeVolumeIsosurface(file.toStdString().c_str());
+}
 
-void glwin::setValue(int val) 
+void glwin::computeVolumeIsosurface(const char *name)
+{
+    if (scene.computeVolumeIsosurface(name))
+    {
+        addToRender(scene.meshes()[i]);
+        update();
+    }
+}
+
+
+void glwin::setValue(int val)
 {
     scene.updateThreshold((double)val);
-    for (std::string name : scene.volume_names()) {
+    for (std::string name : scene.volume_names())
+    {
         loadVolume(name.c_str());
-    }   
+    }
 }
 
 void glwin::addCube()
