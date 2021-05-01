@@ -22,7 +22,9 @@
 #include <fstream>
 #include <OpenMesh/Core/Utils/vector_cast.hh>
 
-Scene::Scene() {}
+Scene::Scene() {
+    thr = 1.0f;
+}
 
 Scene::~Scene() {}
 
@@ -92,6 +94,7 @@ int Scene::loadVolume(const char *name)
 
     if (volume_file.is_open())
     {
+        _volume_names.push_back(std::string(name));
         volume_file >> N;
 
         float data[N][N][N];
@@ -114,7 +117,7 @@ int Scene::loadVolume(const char *name)
         }
 
         volume_file.close();
-        float thr = min_value + (max_value - min_value) / 4.f;
+        float threshold = min_value + (max_value - min_value) / thr;
         float scale_factor = 1.f/(N*N);
         for (int i = 0; i < N; i++)
         {
@@ -123,7 +126,7 @@ int Scene::loadVolume(const char *name)
                 for (int k = 0; k < N; k++)
                 {
                     // std::cout << "Is " << data[i][j][k] << " smaller than " << thr << " ? " << std::endl;
-                    if (data[i][j][k] <= thr)
+                    if (data[i][j][k] <= threshold)
                     {
                         loaded_meshes++;
                         addOctahedron(OpenMesh::Vec3d(i / float(N), j / float(N), k / float(N)), scale_factor);
@@ -397,4 +400,10 @@ void Scene::addOctahedron(OpenMesh::Vec3d position, float scale)
 
     m.update_normals();
     _meshes.push_back(std::pair<MyMesh, ColorInfo>(std::move(m), FACE_COLORS));
+}
+
+void Scene::updateThreshold(double thr) 
+{
+    this->thr = thr;
+    _meshes.clear();
 }

@@ -50,10 +50,16 @@ class Scene {
   void addCube();
   void addCubeVertexcolors();
   void addOctahedron(OpenMesh::Vec3d position, float scale);
+
+  void updateThreshold(double thr);
+
   typedef enum {NONE=0, VERTEX_COLORS, FACE_COLORS} ColorInfo;
   const std::vector<std::pair<MyMesh,ColorInfo> >& meshes() {return _meshes;}
+  const std::vector<std::string>& volume_names() {return _volume_names;}
 
  private:
   std::vector<std::pair<MyMesh,ColorInfo> > _meshes;
+  std::vector<std::string> _volume_names;
+  float thr;
 };
 #endif // __MeshViewer_scene_h_

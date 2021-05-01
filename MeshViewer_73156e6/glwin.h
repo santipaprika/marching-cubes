@@ -46,6 +46,7 @@ class glwin : public QOpenGLWidget, public QOpenGLFunctions_3_3_Core
   void loadVolume(const char *name);
 
  private slots:
+  void setValue(int val);
   void loadVolume();
   void loadMesh();
   void addCube();

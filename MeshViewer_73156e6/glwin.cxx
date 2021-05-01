@@ -66,11 +66,20 @@ void glwin::setup_menu()
     connect(action, SIGNAL(triggered()), this, SLOT(addCubeVC()));
     popup_menu->addAction(action);
 
+    resize(600,600);
     slider = new QSlider(Qt::Horizontal, this);
+
     slider->setFocusPolicy(Qt::StrongFocus);
     slider->setTickPosition(QSlider::TicksBothSides);
     slider->setTickInterval(10);
     slider->setSingleStep(1);
+    slider->setTracking(false);
+    slider->move(50,550);
+    slider->setMinimum(1);
+    slider->setMaximum(40);
+    slider->setMinimumSize(500, 20);
+    // slider->setMinimumSize(600,600);
+    connect( slider, SIGNAL(valueChanged(int)), this, SLOT(setValue(int)) );
 }
 
 //
@@ -108,6 +117,15 @@ void glwin::loadVolume(const char *name)
             update();
         }
     }
+}
+
+
+void glwin::setValue(int val) 
+{
+    scene.updateThreshold((double)val);
+    for (std::string name : scene.volume_names()) {
+        loadVolume(name.c_str());
+    }   
 }
 
 void glwin::addCube()
