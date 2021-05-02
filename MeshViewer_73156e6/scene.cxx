@@ -153,26 +153,43 @@ bool Scene::computeVolumeIsosurface(const char *name) {
 
         
         MCcases cases = MCcases();
+
+        // set of edges and vertices indices (in order according to taulaMC.hpp)
         std::vector<OpenMesh::Vec2i> edges = {{0,4},{4,5},{5,1},{1,0},{2,6},{6,7},{7,3},{3,2},{4,6},{5,7},{0,2},{1,3}}; 
         std::vector<OpenMesh::Vec3i> verts = {{0,0,0},{0,0,1},{0,1,0},{0,1,1},{1,0,0},{1,0,1},{1,1,0},{1,1,1}};
+
         float threshold = min_value + (max_value - min_value) / thr;
-        float scale_factor = 1.f / (N * N);
+        float cell_size = 1.f/N;
         for (int i = 0; i < N - 1; i++) {
             for (int j = 0; j < N - 1; j++) {
                 for (int k = 0; k < N - 1; k++) {
+                    
                     int MC_config = 0;
-
                     std::vector<OpenMesh::Vec3d> vertices;
-                    // get cube (i,j,k) -> (i+1,j+1,k+1)
+
+                    // get configuration for cube (i,j,k) -> (i+1,j+1,k+1)
                     for (int n = 0; n < 8; n++) {
                         MC_config += bin_data[i+n/4][j+(n%4)/2][k+n%2] * pow(2,n);
                     }
 
+                    // get reconstraction for given case: set of triangles using the edges at which the vertices should go
                     std::vector<std::vector<int>> recons = cases(0);
                     for (std::vector<int> edge_idx : recons) {
+
+                        // edges in each individual triangle
                         OpenMesh::Vec2i edge_vert[3] = {edges[edge_idx[0]],edges[edge_idx[1]],edges[edge_idx[2]]};
 
-                        bin_data[i + verts[edge_vert[0][0]][0]][j + verts[edge_vert[0][0]][1]][k + verts[edge_vert[0][0]][2]];
+                        
+                        // first endpoint of edge 0
+                        glm::vec3 endpoint_0_indices = { i + verts[edge_vert[0][0]][0] , j + verts[edge_vert[0][0]][1] , k + verts[edge_vert[0][0]][2] };
+                        glm::vec3 endpoint_1_indices = { i + verts[edge_vert[0][1]][0] , j + verts[edge_vert[0][1]][1] , k + verts[edge_vert[0][1]][2] };
+                        float end_point_0 = bin_data[(int)endpoint_0_indices[0]][(int)endpoint_0_indices[1]][(int)endpoint_0_indices[2]];
+                        float end_point_1 = bin_data[(int)endpoint_1_indices[0]][(int)endpoint_1_indices[1]][(int)endpoint_1_indices[2]];
+
+                        // get vertex position using linear interpolation with the threshold value
+                        float alpha = (thr - end_point_0) / (end_point_1 - end_point_0);
+                        glm::vec3 vertex_position = glm::mix(endpoint_0_indices*cell_size, endpoint_1_indices*cell_size, alpha);
+
                     }
                 }
             }
