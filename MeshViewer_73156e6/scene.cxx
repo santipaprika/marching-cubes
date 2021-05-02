@@ -134,31 +134,18 @@ bool Scene::computeVolumeIsosurface(const char *name) {
         float data[N][N][N];
         bool bin_data[N][N][N];
 
-        float max_value = -INFINITY;
-        float min_value = INFINITY;
+        float isovalue = -800.f;
 
         for (int i = 0; i < N; i++) {
             for (int j = 0; j < N; j++) {
                 for (int k = 0; k < N; k++) {
                     volume_file >> data[i][j][k];
-
-                    max_value = std::max(max_value, data[i][j][k]);
-                    min_value = std::min(min_value, data[i][j][k]);
+                    bin_data[i][j][k] = data[i][j][k] < isovalue;
                 }
             }
         }
 
         volume_file.close();
-
-        float threshold = max_value - (max_value - min_value) / thr;
-
-        for (int i = 0; i < N; i++) {
-            for (int j = 0; j < N; j++) {
-                for (int k = 0; k < N; k++) {
-                    bin_data[i][j][k] = data[i][j][k] > threshold;
-                }
-            }
-        }
 
         MCcases cases = MCcases();
 
@@ -193,8 +180,8 @@ bool Scene::computeVolumeIsosurface(const char *name) {
                             OpenMesh::Vec2i edge = edge_vert[v];
 
                             // get edge endpoints
-                            glm::vec3 endpoint_0_indices = {i + verts[edge[0]][0], j + verts[edge[0]][1], k + verts[edge[0]][2]};
-                            glm::vec3 endpoint_1_indices = {i + verts[edge[1]][0], j + verts[edge[1]][1], k + verts[edge[1]][2]};
+                            glm::vec3 endpoint_0_indices = {i + 1 - verts[edge[0]][0], j + 1 - verts[edge[0]][1], k + 1 - verts[edge[0]][2]};
+                            glm::vec3 endpoint_1_indices = {i + 1 - verts[edge[1]][0], j + 1 - verts[edge[1]][1], k + 1 - verts[edge[1]][2]};
 
                             // edge endpoints in 1D (flattened)
                             int p0_idx_1D = endpoint_0_indices.x * N * N + endpoint_0_indices.y * N + endpoint_0_indices.z;
@@ -210,7 +197,7 @@ bool Scene::computeVolumeIsosurface(const char *name) {
                                 float end_point_1 = data[(int)endpoint_1_indices[0]][(int)endpoint_1_indices[1]][(int)endpoint_1_indices[2]];
 
                                 // get vertex position using linear interpolation with the threshold value
-                                float alpha = (threshold - end_point_0) / (end_point_1 - end_point_0);
+                                float alpha = (isovalue - end_point_0) / (end_point_1 - end_point_0);
                                 glm::vec3 vtx = glm::mix(endpoint_1_indices * cell_size, endpoint_0_indices * cell_size, alpha);
 
                                 // add vertex handler to dictionary
@@ -231,6 +218,10 @@ bool Scene::computeVolumeIsosurface(const char *name) {
                 }
             }
         }
+
+        // check that mesh is not empty
+        if  (edge_to_vtx_dict.empty())
+            return false;
 
         // update normals and append mesh
         m.update_normals();
