@@ -50,7 +50,11 @@ glwin::glwin(const std::string &args)
 
 void glwin::setup_menu()
 { // you may add here your new menu entries
-    QAction *action = new QAction("Load Volume", this);
+    QAction *action = new QAction("Compute volume isosurface", this);
+    connect(action, SIGNAL(triggered()), this, SLOT(computeVolumeIsosurface()));
+    popup_menu->addAction(action);
+
+    action = new QAction("Load Volume", this);
     connect(action, SIGNAL(triggered()), this, SLOT(loadVolume()));
     popup_menu->addAction(action);
 
@@ -129,7 +133,7 @@ void glwin::computeVolumeIsosurface(const char *name)
 {
     if (scene.computeVolumeIsosurface(name))
     {
-        addToRender(scene.meshes()[i]);
+        addToRender(scene.meshes().back());
         update();
     }
 }

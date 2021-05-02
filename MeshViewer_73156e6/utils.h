@@ -37,4 +37,21 @@ class BoundingBox {
 
 std::ostream &operator<<(std::ostream &c, const glm::mat4& m);
 std::ostream &operator<<(std::ostream &c, const glm::mat3& m);
+
+// CPP program to demonstrate implementation of
+// unordered_map for a pair.
+#include <bits/stdc++.h>
+using namespace std;
+
+// A hash function used to hash a pair of any kind
+struct hash_pair {
+	template <class T1, class T2>
+	size_t operator()(const pair<T1, T2>& p) const
+	{
+		auto hash1 = hash<T1>{}(p.first);
+		auto hash2 = hash<T2>{}(p.second);
+		return hash1 ^ hash2;
+	}
+};
+
 #endif // __UTILS_H__

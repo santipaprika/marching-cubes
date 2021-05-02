@@ -22,12 +22,13 @@
 #include <OpenMesh/Core/Utils/vector_cast.hh>
 #include <fstream>
 #include <iostream>
+#include <unordered_map>
 
 #include "taulaMC.hpp"
 #include "utils.h"
 
 Scene::Scene() {
-    thr = 1.0f;
+    thr = 1.1f;
 }
 
 Scene::~Scene() {}
@@ -121,12 +122,11 @@ int Scene::loadVolume(const char *name) {
 }
 
 bool Scene::computeVolumeIsosurface(const char *name) {
-    int loaded_meshes = 0;
-
     std::ifstream volume_file(name);
     int N = 0;
 
     if (volume_file.is_open()) {
+        MyMesh m;
 
         _volume_names.push_back(std::string(name));
         volume_file >> N;
@@ -141,7 +141,6 @@ bool Scene::computeVolumeIsosurface(const char *name) {
             for (int j = 0; j < N; j++) {
                 for (int k = 0; k < N; k++) {
                     volume_file >> data[i][j][k];
-                    bin_data[i][j][k] = data[i][j][k] > thr;
 
                     max_value = std::max(max_value, data[i][j][k]);
                     min_value = std::min(min_value, data[i][j][k]);
@@ -151,50 +150,97 @@ bool Scene::computeVolumeIsosurface(const char *name) {
 
         volume_file.close();
 
-        
+        float threshold = max_value - (max_value - min_value) / thr;
+
+        for (int i = 0; i < N; i++) {
+            for (int j = 0; j < N; j++) {
+                for (int k = 0; k < N; k++) {
+                    bin_data[i][j][k] = data[i][j][k] > threshold;
+                }
+            }
+        }
+
         MCcases cases = MCcases();
 
         // set of edges and vertices indices (in order according to taulaMC.hpp)
-        std::vector<OpenMesh::Vec2i> edges = {{0,4},{4,5},{5,1},{1,0},{2,6},{6,7},{7,3},{3,2},{4,6},{5,7},{0,2},{1,3}}; 
-        std::vector<OpenMesh::Vec3i> verts = {{0,0,0},{0,0,1},{0,1,0},{0,1,1},{1,0,0},{1,0,1},{1,1,0},{1,1,1}};
+        std::vector<OpenMesh::Vec2i> edges = {{0, 4}, {4, 5}, {5, 1}, {1, 0}, {2, 6}, {6, 7}, {7, 3}, {3, 2}, {4, 6}, {5, 7}, {0, 2}, {1, 3}};
+        std::vector<OpenMesh::Vec3i> verts = {{0, 0, 0}, {0, 0, 1}, {0, 1, 0}, {0, 1, 1}, {1, 0, 0}, {1, 0, 1}, {1, 1, 0}, {1, 1, 1}};
 
-        float threshold = min_value + (max_value - min_value) / thr;
-        float cell_size = 1.f/N;
+        float cell_size = 1.f / N;
+
+        // dictionary with pair of edge endpoint indices as key (global flattened indices), and Vertex handle as values.
+        std::unordered_map<std::pair<int, int>, MyMesh::VertexHandle, hash_pair> edge_to_vtx_dict;
         for (int i = 0; i < N - 1; i++) {
             for (int j = 0; j < N - 1; j++) {
                 for (int k = 0; k < N - 1; k++) {
-                    
                     int MC_config = 0;
                     std::vector<OpenMesh::Vec3d> vertices;
 
                     // get configuration for cube (i,j,k) -> (i+1,j+1,k+1)
                     for (int n = 0; n < 8; n++) {
-                        MC_config += bin_data[i+n/4][j+(n%4)/2][k+n%2] * pow(2,n);
+                        MC_config += bin_data[i + n / 4][j + (n % 4) / 2][k + n % 2] * pow(2, n);
                     }
 
                     // get reconstraction for given case: set of triangles using the edges at which the vertices should go
-                    std::vector<std::vector<int>> recons = cases(0);
+                    std::vector<std::vector<int>> recons = cases(MC_config);
                     for (std::vector<int> edge_idx : recons) {
-
                         // edges in each individual triangle
-                        OpenMesh::Vec2i edge_vert[3] = {edges[edge_idx[0]],edges[edge_idx[1]],edges[edge_idx[2]]};
+                        OpenMesh::Vec2i edge_vert[3] = {edges[edge_idx[0]], edges[edge_idx[1]], edges[edge_idx[2]]};
 
-                        
-                        // first endpoint of edge 0
-                        glm::vec3 endpoint_0_indices = { i + verts[edge_vert[0][0]][0] , j + verts[edge_vert[0][0]][1] , k + verts[edge_vert[0][0]][2] };
-                        glm::vec3 endpoint_1_indices = { i + verts[edge_vert[0][1]][0] , j + verts[edge_vert[0][1]][1] , k + verts[edge_vert[0][1]][2] };
-                        float end_point_0 = bin_data[(int)endpoint_0_indices[0]][(int)endpoint_0_indices[1]][(int)endpoint_0_indices[2]];
-                        float end_point_1 = bin_data[(int)endpoint_1_indices[0]][(int)endpoint_1_indices[1]][(int)endpoint_1_indices[2]];
+                        pair<int, int> endpoints[3];
+                        for (int v = 0; v < 3; v++) {
+                            // current edge
+                            OpenMesh::Vec2i edge = edge_vert[v];
 
-                        // get vertex position using linear interpolation with the threshold value
-                        float alpha = (thr - end_point_0) / (end_point_1 - end_point_0);
-                        glm::vec3 vertex_position = glm::mix(endpoint_0_indices*cell_size, endpoint_1_indices*cell_size, alpha);
+                            // get edge endpoints
+                            glm::vec3 endpoint_0_indices = {i + verts[edge[0]][0], j + verts[edge[0]][1], k + verts[edge[0]][2]};
+                            glm::vec3 endpoint_1_indices = {i + verts[edge[1]][0], j + verts[edge[1]][1], k + verts[edge[1]][2]};
 
+                            // edge endpoints in 1D (flattened)
+                            int p0_idx_1D = endpoint_0_indices.x * N * N + endpoint_0_indices.y * N + endpoint_0_indices.z;
+                            int p1_idx_1D = endpoint_1_indices.x * N * N + endpoint_1_indices.y * N + endpoint_1_indices.z;
+
+                            // define endpoints pair
+                            endpoints[v] = std::make_pair(p0_idx_1D, p1_idx_1D);
+
+                            // if endpoint vertex is already defined, do not create it again
+                            if (edge_to_vtx_dict.find(endpoints[v]) == edge_to_vtx_dict.end()) {
+                                // get value stored in edge endpoints
+                                float end_point_0 = data[(int)endpoint_0_indices[0]][(int)endpoint_0_indices[1]][(int)endpoint_0_indices[2]];
+                                float end_point_1 = data[(int)endpoint_1_indices[0]][(int)endpoint_1_indices[1]][(int)endpoint_1_indices[2]];
+
+                                // get vertex position using linear interpolation with the threshold value
+                                float alpha = (threshold - end_point_0) / (end_point_1 - end_point_0);
+                                glm::vec3 vtx = glm::mix(endpoint_1_indices * cell_size, endpoint_0_indices * cell_size, alpha);
+
+                                // add vertex handler to dictionary
+                                edge_to_vtx_dict[endpoints[v]] = m.add_vertex(MyMesh::Point(vtx.x, vtx.y, vtx.z));
+                            }
+                        }
+
+                        // add face to mesh
+                        std::vector<MyMesh::VertexHandle> face_vhandles;
+                        MyMesh::FaceHandle face;
+                        face_vhandles.clear();
+                        face_vhandles.push_back(edge_to_vtx_dict[endpoints[0]]);
+                        face_vhandles.push_back(edge_to_vtx_dict[endpoints[1]]);
+                        face_vhandles.push_back(edge_to_vtx_dict[endpoints[2]]);
+                        face = m.add_face(face_vhandles);
+                        m.set_color(face, MyMesh::Color(0., 0., 1.));
                     }
                 }
             }
         }
+
+        // update normals and append mesh
+        m.update_normals();
+        _meshes.push_back(std::pair<MyMesh, ColorInfo>(std::move(m), FACE_COLORS));
+        
+    } else {
+        return false;
     }
+
+    return true;
 }
 
 void Scene::addCube() {
