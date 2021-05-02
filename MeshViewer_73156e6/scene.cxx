@@ -199,7 +199,7 @@ bool Scene::computeVolumeIsosurface(const char *name) {
 
                                 // get vertex position using linear interpolation with the threshold value
                                 float alpha = (isovalue - end_point_0) / (end_point_1 - end_point_0);
-                                glm::vec3 vtx = glm::mix(endpoint_1_indices * cell_size, endpoint_0_indices * cell_size, alpha);
+                                glm::vec3 vtx = glm::mix(endpoint_0_indices * cell_size, endpoint_1_indices * cell_size, alpha);
 
                                 // add vertex handler to dictionary
                                 edge_to_vtx_dict[endpoints[v]] = m.add_vertex(MyMesh::Point(vtx.x, vtx.y, vtx.z));
@@ -214,7 +214,7 @@ bool Scene::computeVolumeIsosurface(const char *name) {
                         face_vhandles.push_back(edge_to_vtx_dict[endpoints[1]]);
                         face_vhandles.push_back(edge_to_vtx_dict[endpoints[2]]);
                         face = m.add_face(face_vhandles);
-                        m.set_color(face, MyMesh::Color(0., 0., 1.));
+                        m.set_color(face, MyMesh::Color(0.6, 0.6, 0.6));
                     }
                 }
             }
