@@ -592,12 +592,13 @@ void glwin::addToRender(const std::pair<MyMesh, Scene::ColorInfo> &mesh_)
         bbaux.add(p + 3 * i);
     boxes.push_back(std::move(bbaux));
     bb.add(bbaux);
-    std::cerr << "Box:   (" << bbaux.min()[0] << ", " << bbaux.min()[1] << ", " << bbaux.min()[2]
-              << "),  (" << bbaux.max()[0] << ", " << bbaux.max()[1] << ", " << bbaux.max()[2]
-              << ")\n";
-    std::cerr << "ScBox: (" << bb.min()[0] << ", " << bb.min()[1] << ", " << bb.min()[2]
-              << "),  (" << bb.max()[0] << ", " << bb.max()[1] << ", " << bb.max()[2]
-              << ")\n";
+    //std::cerr << "Box:   (" << bbaux.min()[0] << ", " << bbaux.min()[1] << ", " << bbaux.min()[2]
+    //          << "),  (" << bbaux.max()[0] << ", " << bbaux.max()[1] << ", " << bbaux.max()[2]
+    //          << ")\n";
+    //std::cerr << "ScBox: (" << bb.min()[0] << ", " << bb.min()[1] << ", " << bb.min()[2]
+    //          << "),  (" << bb.max()[0] << ", " << bb.max()[1] << ", " << bb.max()[2]
+    //          << ")\n";
+
     VRP = glm::vec3(bb.min()[0] + bb.max()[0],
                     bb.min()[1] + bb.max()[1],
                     bb.min()[2] + bb.max()[2]) *
@@ -605,8 +606,8 @@ void glwin::addToRender(const std::pair<MyMesh, Scene::ColorInfo> &mesh_)
     dist = sqrt(pow(-bb.min()[0] + bb.max()[0], 2) +
                 pow(-bb.min()[1] + bb.max()[1], 2) +
                 pow(-bb.min()[2] + bb.max()[2], 2));
-    std::cerr << "dist = " << dist << std::endl
-              << "VRP  = (" << VRP[0] << ", " << VRP[1] << ", " << VRP[2] << ")" << std::endl;
+    //std::cerr << "dist = " << dist << std::endl
+    //          << "VRP  = (" << VRP[0] << ", " << VRP[1] << ", " << VRP[2] << ")" << std::endl;
     updateCameraTransform();
     updateProjectionTransform();
     update();
