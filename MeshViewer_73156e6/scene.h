@@ -21,8 +21,11 @@
 #define __MeshViewer_scene_h_
 #include <vector>
 #include <utility>
+#include <unordered_map>
 #include <OpenMesh/Core/IO/MeshIO.hh>
 #include <OpenMesh/Core/Mesh/TriMesh_ArrayKernelT.hh>
+#include "utils.h"
+#include "taulaMC.hpp"
 
 #define OUT
 
@@ -66,11 +69,16 @@ class Scene {
  private:
   std::vector<std::pair<MyMesh,ColorInfo> > _meshes;
   std::vector<std::string> _volume_names;
-  float thr;
-  float isovalue;
   float* data;
-  float _min_value, _max_value;
+  float _min_value, _max_value, cell_size, isovalue, thr;
+  MCcases cases;
+
+  // set of edges and vertices indices (in order according to taulaMC.hpp)
+  std::vector<OpenMesh::Vec2i> edges = {{0, 4}, {4, 5}, {5, 1}, {1, 0}, {2, 6}, {6, 7}, {7, 3}, {3, 2}, {4, 6}, {5, 7}, {0, 2}, {1, 3}};
+  std::vector<OpenMesh::Vec3i> verts = {{0, 0, 0}, {0, 0, 1}, {0, 1, 0}, {0, 1, 1}, {1, 0, 0}, {1, 0, 1}, {1, 1, 0}, {1, 1, 1}};
 
   void initializeData(std::ifstream &volume_file, int N);
+  bool parseVolume(const char* name, std::ifstream &volume_file, int &N);
+  void reconstructVoxel(int &MC_config, int &N, MyMesh &m, std::unordered_map<std::pair<int, int>, MyMesh::VertexHandle, hash_pair> &edge_to_vtx_dict, int &i, int &j, int &k);
 };
 #endif // __MeshViewer_scene_h_
