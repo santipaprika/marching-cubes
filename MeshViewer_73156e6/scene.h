@@ -55,15 +55,22 @@ class Scene {
   void addCubeVertexcolors();
   void addOctahedron(OpenMesh::Vec3d position, float scale);
 
-  void updateThreshold(double thr);
+  void setIsovalue(double val);
 
   typedef enum {NONE=0, VERTEX_COLORS, FACE_COLORS} ColorInfo;
   const std::vector<std::pair<MyMesh,ColorInfo> >& meshes() {return _meshes;}
   const std::vector<std::string>& volume_names() {return _volume_names;}
+  float min_value() {return _min_value;}
+  float max_value() {return _max_value;}
 
  private:
   std::vector<std::pair<MyMesh,ColorInfo> > _meshes;
   std::vector<std::string> _volume_names;
   float thr;
+  float isovalue;
+  float* data;
+  float _min_value, _max_value;
+
+  void initializeData(std::ifstream &volume_file, int N);
 };
 #endif // __MeshViewer_scene_h_

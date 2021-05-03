@@ -79,8 +79,8 @@ void glwin::setup_menu()
     slider->setSingleStep(1);
     slider->setTracking(false);
     slider->move(50, 550);
-    slider->setMinimum(1);
-    slider->setMaximum(40);
+    slider->setMinimum(-50);
+    slider->setMaximum(50);
     slider->setMinimumSize(500, 20);
     // slider->setMinimumSize(600,600);
     connect(slider, SIGNAL(valueChanged(int)), this, SLOT(setValue(int)));
@@ -127,6 +127,9 @@ void glwin::computeVolumeIsosurface()
 {
     QString file = QFileDialog::getOpenFileName(NULL, "Select a volume to add:", "", "Meshes (*.txt);;All Files (*)");
     computeVolumeIsosurface(file.toStdString().c_str());
+
+    slider->setMinimum(scene.min_value());
+    slider->setMaximum(scene.max_value()-1.f);
 }
 
 void glwin::computeVolumeIsosurface(const char *name)
@@ -141,11 +144,14 @@ void glwin::computeVolumeIsosurface(const char *name)
 
 void glwin::setValue(int val)
 {
-    scene.updateThreshold((double)val);
-    for (std::string name : scene.volume_names())
-    {
-        loadVolume(name.c_str());
+    if (scene.meshes().size() > 0) {
+        VAOS.pop_back();
+        elementsSize.pop_back();
+        drawMethods.pop_back();
     }
+
+    scene.setIsovalue((double)val);
+    computeVolumeIsosurface(scene.volume_names().back().c_str());
 }
 
 void glwin::addCube()
