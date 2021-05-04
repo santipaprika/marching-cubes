@@ -136,7 +136,7 @@ void glwin::computeVolumeIsosurface()
     computeVolumeIsosurface(file.toStdString().c_str());
 
     slider->setMinimum(scene.min_value());
-    slider->setMaximum(6*scene.max_value()-1.f);
+    slider->setMaximum(scene.max_value()-1.f);
     slider->setValue(slider->minimum());
 
     //computeVolumeIsosurface(file.toStdString().c_str());
@@ -161,8 +161,7 @@ void glwin::setValue(int val)
         scene.clear_meshes();
     }
 
-    float step_weight = (slider->maximum()/6.f - slider->minimum()) / 3500.f;
-    scene.setIsovalue(slider->minimum() + ((float)val - slider->minimum()) * step_weight);
+    scene.setIsovalue((double)val);
     if (scene.volume_names().size() > 0) {
         computeVolumeIsosurface(scene.volume_names().back().c_str());
     }
