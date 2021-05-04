@@ -29,6 +29,8 @@
 #include <QString>
 #include <QAction>
 #include <QCursor>
+#include <QImageWriter>
+#include <QPushButton>
 
 /// Constructor: receives program arguments in case one
 ///              wants to use them in the future...
@@ -38,7 +40,7 @@ glwin::glwin(const std::string &args)
     mainShaderP = 0;
     simpleShaderP = 0;
     VAOeixos = 0;
-    rot = glm::mat4(1);
+    rot = glm::rotate(glm::rotate(glm::mat4(1),M_PI_4f32,glm::vec3(1,0,0)), -M_PI_4f32,glm::vec3(0,1,0));
     VRP = glm::vec3(0.);
     dist = 1;
     updateCameraTransform();
@@ -46,6 +48,7 @@ glwin::glwin(const std::string &args)
     updateProjectionTransform();
     popup_menu = new QMenu("Menu", this); // Creates the app pop-up menu
     setup_menu();
+    save_animation = false;
 }
 
 void glwin::setup_menu()
@@ -84,6 +87,10 @@ void glwin::setup_menu()
     slider->setMinimumSize(500, 20);
     // slider->setMinimumSize(600,600);
     connect(slider, SIGNAL(valueChanged(int)), this, SLOT(setValue(int)));
+
+    button = new QPushButton("&Animate", this);
+    button->move(270, 570);
+    connect(button, SIGNAL(clicked()), this, SLOT(animate()));
 }
 
 //
@@ -129,7 +136,10 @@ void glwin::computeVolumeIsosurface()
     computeVolumeIsosurface(file.toStdString().c_str());
 
     slider->setMinimum(scene.min_value());
-    slider->setMaximum(scene.max_value()-1.f);
+    slider->setMaximum(6*scene.max_value()-1.f);
+    slider->setValue(slider->minimum());
+
+    //computeVolumeIsosurface(file.toStdString().c_str());
 }
 
 void glwin::computeVolumeIsosurface(const char *name)
@@ -148,10 +158,23 @@ void glwin::setValue(int val)
         VAOS.pop_back();
         elementsSize.pop_back();
         drawMethods.pop_back();
+        scene.clear_meshes();
     }
 
-    scene.setIsovalue((double)val);
-    computeVolumeIsosurface(scene.volume_names().back().c_str());
+    float step_weight = (slider->maximum()/6.f - slider->minimum()) / 3500.f;
+    scene.setIsovalue(slider->minimum() + ((float)val - slider->minimum()) * step_weight);
+    if (scene.volume_names().size() > 0) {
+        computeVolumeIsosurface(scene.volume_names().back().c_str());
+    }
+
+
+}
+
+void glwin::animate()
+{
+    if (VAOS.size() > 0)
+        save_animation = true;
+    update();
 }
 
 void glwin::addCube()
@@ -199,6 +222,9 @@ void glwin::keyPressEvent(QKeyEvent *e)
 
 void glwin::paintGL(void)
 {
+    if (save_animation && slider->value() < slider->maximum()-1)
+        slider->setValue(slider->value()+1);
+
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     drawAxes();
     //  next the meshes:
@@ -223,6 +249,28 @@ void glwin::paintGL(void)
             glDrawArrays(GL_TRIANGLES, 0, *itsizes);
     }
     glBindVertexArray(0);
+    glFlush();
+
+    if (save_animation && slider->value() < slider->maximum()-1)
+        SaveImageAs();
+}
+
+void glwin::SaveImageAs()
+{
+    QString filename = "img/" + QString::number(slider->value() + abs(slider->minimum())) + ".png";
+    // filename.append( ".png" );
+
+    QPixmap pixmap( size() );
+    render( &pixmap );
+    QImage image = grabFramebuffer();
+    QImageWriter imageWriter( filename, "png" );
+
+    //imageWriter.setQuality(100);
+
+    if( imageWriter.canWrite() )
+    {
+        imageWriter.write(image);
+    }
 }
 
 void glwin::updateCameraTransform()

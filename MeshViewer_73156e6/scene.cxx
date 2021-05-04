@@ -31,7 +31,7 @@ Scene::Scene() {
     data = nullptr;
     _min_value = INFINITY;
     _max_value = -INFINITY;
-    isovalue = -0.f;
+    isovalue = -INFINITY;
     cell_size = 1.f;
     cases = MCcases();
 }
@@ -498,9 +498,9 @@ void Scene::addOctahedron(OpenMesh::Vec3d position, float scale) {
     _meshes.push_back(std::pair<MyMesh, ColorInfo>(std::move(m), FACE_COLORS));
 }
 
-void Scene::setIsovalue(double val) {
+void Scene::setIsovalue(float val) {
     isovalue = val;
-    _meshes.clear();
+    //_meshes.clear();
 }
 
 void Scene::initializeData(std::ifstream &volume_file, int N)

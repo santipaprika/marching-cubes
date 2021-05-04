@@ -62,3 +62,7 @@ compile_commands.json
 # Binaries
 **/MeshViewer
 
+# Images
+*.png
+*.jpg
+*.jpeg

@@ -48,6 +48,7 @@ class glwin : public QOpenGLWidget, public QOpenGLFunctions_3_3_Core
 
  private slots:
   void setValue(int val);
+  void animate();
   void loadVolume();
   void computeVolumeIsosurface();
   void loadMesh();
@@ -62,6 +63,7 @@ class glwin : public QOpenGLWidget, public QOpenGLFunctions_3_3_Core
   void updateCameraTransform();
   void updateProjectionTransform();
   void addToRender(const std::pair<MyMesh,Scene::ColorInfo> &mesh_);
+  void SaveImageAs();
 
   virtual void initializeGL() Q_DECL_OVERRIDE;
   virtual void paintGL( void ) Q_DECL_OVERRIDE;
@@ -100,5 +102,8 @@ class glwin : public QOpenGLWidget, public QOpenGLFunctions_3_3_Core
   QMenu *popup_menu;
 
   QSlider *slider;
+  QPushButton *button;
+
+  bool save_animation;
 };
 #endif // __MeshViewer_glwin_h_
