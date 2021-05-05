@@ -24,7 +24,9 @@ Finally, run the actual application:
 Isosurface computation can be achieved by right-clicking inside the program window and selecting *Compute Volume Isosurface*. Then, the explorer will open so that an actual volume file can be chosen.
 
 ### Volume file format
-The required volume format is a text file (_.txt_) consisting of _N<sup>3</sup> + 1_ lines, each line containing a number, so that the first line contains _N_ (the size of the voxelization, which is the same in all three dimensions), and the following lines contain the values of the scalar field sorted so that the value for voxel (_i_; _j_; _k_) is at line _iN<sup>2</sup> + jN + k + 1_ (lines numbered starting at zero, which is the line containing _N_).
+The required volume format is a text file (_.txt_) consisting of _N<sup>3</sup> + 1_ lines, each line containing a number, so that the first line contains _N_ (the size of the voxelization, which is the same in all three dimensions), and the following lines contain the values of the scalar field sorted so that the value for voxel (_i_; _j_; _k_) is at line _iN<sup>2</sup> + jN + k + 1_ (lines numbered starting at zero, which is the line containing _N_).  
+  
+Sample volume files can be found in the [_Data_](Data/) folder.
 
 ### Isovalue
 The attached marching cubes implementation will set the isovalue to the minimum value in the volume by default.  
