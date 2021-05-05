@@ -171,8 +171,10 @@ void glwin::setValue(int val)
 
 void glwin::animate()
 {
-    if (VAOS.size() > 0)
-        save_animation = true;
+    if (VAOS.size() > 0) {
+        save_animation = !save_animation;
+        button->setText(save_animation ? "&Stop" : "&Animate");
+    }
     update();
 }
 
