@@ -225,8 +225,8 @@ void glwin::keyPressEvent(QKeyEvent *e)
 
 void glwin::paintGL(void)
 {
-    if (save_animation && slider->value() < slider->maximum()-1)
-        slider->setValue(slider->value()+1);
+    if (save_animation)
+        slider->setValue(slider->value() < slider->maximum()-1 ? slider->value()+1 : slider->minimum());
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     drawAxes();
@@ -254,7 +254,7 @@ void glwin::paintGL(void)
     glBindVertexArray(0);
     glFlush();
 
-    if (save_animation && slider->value() < slider->maximum()-1)
+    if (save_animation && slider->value() < slider->maximum())
         SaveImageAs();
 }
 
