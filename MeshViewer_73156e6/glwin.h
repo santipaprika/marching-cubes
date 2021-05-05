@@ -105,5 +105,6 @@ class glwin : public QOpenGLWidget, public QOpenGLFunctions_3_3_Core
   QPushButton *button;
 
   bool save_animation;
+  int arg_isovalue;
 };
 #endif // __MeshViewer_glwin_h_

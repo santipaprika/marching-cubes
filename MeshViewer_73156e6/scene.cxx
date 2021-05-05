@@ -500,7 +500,8 @@ void Scene::addOctahedron(OpenMesh::Vec3d position, float scale) {
 
 void Scene::setIsovalue(float val) {
     isovalue = val;
-    //_meshes.clear();
+
+    std::cout << "New isovalue: " << val << std::endl;
 }
 
 void Scene::initializeData(std::ifstream &volume_file, int N)

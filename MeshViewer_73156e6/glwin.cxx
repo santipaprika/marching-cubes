@@ -32,8 +32,7 @@
 #include <QImageWriter>
 #include <QPushButton>
 
-/// Constructor: receives program arguments in case one
-///              wants to use them in the future...
+
 glwin::glwin(const std::string &args)
 {
     mainArgs = args;
@@ -49,6 +48,13 @@ glwin::glwin(const std::string &args)
     popup_menu = new QMenu("Menu", this); // Creates the app pop-up menu
     setup_menu();
     save_animation = false;
+
+    arg_isovalue = -(int)INFINITY;
+
+    if (args.size() > 0) {
+        std::stringstream ss(args);
+        ss >> arg_isovalue;
+    }
 }
 
 void glwin::setup_menu()
@@ -85,7 +91,6 @@ void glwin::setup_menu()
     slider->setMinimum(-50);
     slider->setMaximum(50);
     slider->setMinimumSize(500, 20);
-    // slider->setMinimumSize(600,600);
     connect(slider, SIGNAL(valueChanged(int)), this, SLOT(setValue(int)));
 
     button = new QPushButton("&Animate", this);
@@ -93,9 +98,6 @@ void glwin::setup_menu()
     connect(button, SIGNAL(clicked()), this, SLOT(animate()));
 }
 
-//
-// Code for slots triggered from the menu (or elsewhere...):
-//
 void glwin::loadMesh()
 {
     QString file = QFileDialog::getOpenFileName(NULL, "Select a mesh to add:", "", "Meshes (*.obj *.ply *.stl *.off *.om);;All Files (*)");
@@ -137,9 +139,11 @@ void glwin::computeVolumeIsosurface()
 
     slider->setMinimum(scene.min_value());
     slider->setMaximum(scene.max_value()-1.f);
-    slider->setValue(slider->minimum());
 
-    //computeVolumeIsosurface(file.toStdString().c_str());
+    if (arg_isovalue == slider->value())
+        setValue(arg_isovalue);
+    else
+        slider->setValue(arg_isovalue > -(int)INFINITY ? arg_isovalue : slider->minimum());
 }
 
 void glwin::computeVolumeIsosurface(const char *name)
@@ -162,10 +166,8 @@ void glwin::setValue(int val)
     }
 
     scene.setIsovalue((double)val);
-    if (scene.volume_names().size() > 0) {
+    if (scene.volume_names().size() > 0)
         computeVolumeIsosurface(scene.volume_names().back().c_str());
-    }
-
 
 }
 
